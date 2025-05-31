@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Penjualan Sederhana</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        /* CSS Utama */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0; /* Hapus padding body agar header bisa full width */
+            display: flex;
+            flex-direction: column; /* Atur flex column untuk header dan konten */
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Header Aplikasi */
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Untuk responsif */
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: white; /* Pastikan warna putih */
+            text-align: left; /* Rata kiri di header */
+            border-bottom: none; /* Hapus border bawah */
+            padding-bottom: 0; /* Hapus padding bawah */
+        }
+
+        .header-menu {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center; /* Rata tengah tombol di header */
+        }
+
+        .header-menu button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+        }
+
+        .header-menu button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .header-menu button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Konten Utama Aplikasi */
+        .container {
+            flex-grow: 1; /* Konten mengisi sisa ruang vertikal */
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 950px;
+            margin: 20px auto; /* Tambahkan margin auto untuk centering */
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Pesan Selamat Datang */
+        .welcome-message {
+            text-align: center;
+            padding: 50px 20px;
+            background-color: #e9f5ff;
+            border: 1px solid #cce5ff;
+            border-radius: 10px;
+            color: #004085;
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+
+        .welcome-message p {
+            margin-bottom: 20px;
+        }
+
+        .welcome-message button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            margin: 0 10px;
+        }
+
+        .welcome-message button:hover {
+            background-color: #218838;
+        }
+
+
+        /* Bagian Daftar Nota Tersimpan (tetap di halaman utama) */
+        .saved-notes-section {
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            background-color: #fdfefe;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .saved-notes-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .saved-notes-list li {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .saved-notes-list li span {
+            font-weight: 600;
+            color: #495057;
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        .saved-notes-list li .note-actions button {
+            width: auto;
+            padding: 8px 15px;
+            font-size: 0.9em;
+            margin-left: 10px;
+            box-shadow: none;
+        }
+
+        .saved-notes-list li .note-actions .view-note {
+            background-color: #17a2b8;
+        }
+        .saved-notes-list li .note-actions .view-note:hover {
+            background-color: #138496;
+        }
+
+        .saved-notes-list li .note-actions .delete-note {
+            background-color: #dc3545;
+        }
+        .saved-notes-list li .note-actions .delete-note:hover {
+            background-color: #c82333;
+        }
+
+        /* --- Gaya Modal Pop-up --- */
+        .modal-overlay {
+            display: none; /* Sembunyikan secara default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto; /* Memungkinkan scroll jika konten modal panjang */
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 800px; /* Lebar modal */
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: #888;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: #333;
+        }
+
+        /* Gaya untuk form di dalam modal (mirip input-section) */
+        .modal-content .input-section,
+        .modal-content .product-management-section,
+        .modal-content .view-nota-content,
+        .modal-content .add-stock-content,
+        .modal-content .backup-restore-content {
+            padding: 0; /* Hapus padding karena sudah ada di modal-content */
+            border: none; /* Hapus border */
+            background-color: transparent; /* Hapus background */
+            box-shadow: none; /* Hapus shadow */
+        }
+
+        /* Gaya untuk Label dan Input Umum di Modal */
+        .modal-content label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .modal-content input[type="text"],
+        .modal-content input[type="number"],
+        .modal-content input[type="date"],
+        .modal-content input[type="file"],
+        .modal-content select {
+            box-sizing: border-box; /* Pastikan box model yang konsisten */
+            width: calc(100% - 24px);
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modal-content input[type="text"]:focus,
+        .modal-content input[type="number"]:focus,
+        .modal-content input[type="date"]:focus,
+        .modal-content input[type="file"]:focus,
+        .modal-content select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        /* Gaya Tombol Umum di Modal */
+        .modal-content button {
+            background-color: #28a745;
+            color: white;
+            padding: 14px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
+            margin-top: 10px;
+        }
+
+        .modal-content button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        .modal-content button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Gaya Tabel Keranjang di Modal */
+        .modal-content .cart-section table,
+        .modal-content .view-nota-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .modal-content .cart-section th, .modal-content .cart-section td,
+        .modal-content .view-nota-content th, .modal-content .view-nota-content td {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            text-align: left;
+            font-size: 0.95em;
+        }
+
+        .modal-content .cart-section th,
+        .modal-content .view-nota-content th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .modal-content .cart-section tbody tr:nth-child(even),
+        .modal-content .view-nota-content tbody tr:nth-child(even) {
+            background-color: #fefefe;
+        }
+
+        .modal-content .cart-section tbody tr:hover,
+        .modal-content .view-nota-content tbody tr:hover {
+            background-color: #e9f5ff;
+        }
+
+        .modal-content .cart-section tfoot td,
+        .modal-content .view-nota-content tfoot td {
+            font-weight: bold;
+            background-color: #e9ecef;
+            padding: 15px;
+            font-size: 1.1em;
+            color: #34495e;
+        }
+
+        .modal-content .remove-item {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(220, 53, 69, 0.2);
+        }
+
+        .modal-content .remove-item:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .modal-content .remove-item:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(220, 53, 69, 0.3);
+        }
+
+        .modal-content #printNota {
+            background-color: #007bff;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+        }
+
+        .modal-content #printNota:hover {
+            background-color: #0069d9;
+        }
+
+        .modal-content #printNota:active {
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Gaya untuk input produk sejajar di modal */
+        .modal-content .product-inputs-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .modal-content .product-inputs-group > div {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .modal-content .product-inputs-group label {
+            margin-bottom: 5px;
+        }
+
+        .modal-content .product-inputs-group input, .modal-content .product-inputs-group select {
+            margin-bottom: 0;
+            width: calc(100% - 24px);
+        }
+
+        /* Gaya untuk Bagian Manajemen Produk di Modal */
+        .modal-content .product-management-section h3 {
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+
+        .modal-content .product-management-section .product-input-form {
+            padding: 15px;
+            border: 1px dashed #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .modal-content .product-management-section button#addNewProductBtn {
+            background-color: #007bff;
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+        }
+        .modal-content .product-management-section button#addNewProductBtn:hover {
+            background-color: #0069d9;
+        }
+        .modal-content .product-management-section button#addNewProductBtn:active {
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .modal-content .product-management-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .modal-content .product-management-section th, .modal-content .product-management-section td {
+            border: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .modal-content .product-management-section th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 700;
+        }
+
+        .modal-content .product-management-section tbody tr:nth-child(even) {
+            background-color: #fefefe;
+        }
+
+        .modal-content .product-management-section tbody tr:hover {
+            background-color: #e9f5ff;
+        }
+
+        .modal-content .product-management-section .delete-product,
+        .modal-content .product-management-section .edit-product,
+        .modal-content .product-management-section .add-stock-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.3s ease;
+            width: auto;
+            margin-top: 0;
+            margin-right: 5px; /* Spasi antar tombol */
+        }
+        .modal-content .product-management-section .delete-product:hover {
+            background-color: #c82333;
+        }
+        .modal-content .product-management-section .edit-product {
+            background-color: #ffc107; /* Warna kuning untuk edit */
+            color: #333;
+        }
+        .modal-content .product-management-section .edit-product:hover {
+            background-color: #e0a800;
+        }
+        .modal-content .product-management-section .cancel-edit {
+            background-color: #6c757d;
+            color: white;
+            margin-left: 10px;
+        }
+        .modal-content .product-management-section .cancel-edit:hover {
+            background-color: #5a6268;
+        }
+        .modal-content .product-management-section .add-stock-btn {
+            background-color: #20c997; /* Warna hijau tosca */
+            color: white;
+        }
+        .modal-content .product-management-section .add-stock-btn:hover {
+            background-color: #17a2b8;
+        }
+
+
+        /* Gaya untuk dropdown select di modal */
+        .modal-content .product-inputs-group select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13%205.1L146.2%20202.7%2018.3%2074.5a17.6%2017.6%200%200%200-25.3%2023.7l130.4%20129.5c.4.4.9.8%201.4%201.1.6.3%201.2.6%201.8.9.7.3%201.4.5%202.1.7.7.2%201.5.3%202.2.3s1.5-.1%202.2-.3c.7-.2%201.4-.4%202.1-.7.6-.3%201.2-.6%201.8-.9.5-.3%201-.7%201.4-1.1L287%2093.1a17.6%2017.6%200%200%200%200-23.7z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            padding-right: 30px;
+        }
+
+        /* Gaya untuk tampilan nota di modal */
+        .view-nota-details {
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .view-nota-details p {
+            margin: 5px 0;
+        }
+        .view-nota-details strong {
+            color: #34495e;
+        }
+
+        /* Gaya untuk modal tambah stok */
+        #addStockModal .modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        #addStockModal .modal-content h2 {
+            margin-bottom: 15px;
+        }
+        #addStockModal .modal-content input[type="number"] {
+            width: calc(100% - 24px);
+            margin-bottom: 20px;
+        }
+        #addStockModal .modal-content button {
+            background-color: #28a745;
+            margin-top: 0;
+        }
+        #addStockModal .modal-content button:hover {
+            background-color: #218838;
+        }
+
+        /* Gaya untuk modal backup/restore */
+        #backupRestoreModal .modal-content {
+            max-width: 500px;
+        }
+        #backupRestoreModal .modal-content .backup-section,
+        #backupRestoreModal .modal-content .restore-section {
+            padding: 15px;
+            border: 1px dashed #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #backupRestoreModal .modal-content .backup-section button,
+        #backupRestoreModal .modal-content .restore-section button {
+            margin-top: 15px;
+        }
+        #backupRestoreModal .modal-content .restore-section input[type="file"] {
+            margin-bottom: 10px;
+        }
+        #backupRestoreModal .modal-content #restoreMessage {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #dc3545;
+        }
+
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .section-group {
+                flex-direction: column;
+            }
+            .input-section, .cart-section, .saved-notes-section, .product-management-section {
+                min-width: unset;
+            }
+            .product-inputs-group {
+                flex-direction: column;
+            }
+            .product-inputs-group > div {
+                min-width: unset;
+            }
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            header h1 {
+                text-align: center;
+                width: 100%;
+            }
+            .header-menu {
+                width: 100%;
+                justify-content: space-around;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.4em;
+            }
+
+            .input-section input[type="text"],
+            .input-section input[type="number"],
+            .input-section input[type="date"],
+            .input-section button, .cart-section button,
+            .product-management-section input[type="text"],
+            .product-management-section input[type="number"],
+            .product-inputs-group select,
+            .modal-content input[type="text"],
+            .modal-content input[type="number"],
+            .modal-content input[type="date"],
+            .modal-content select,
+            .modal-content button,
+            .modal-content input[type="file"] {
+                font-size: 0.95em;
+                padding: 10px;
+            }
+
+            .cart-section th, .cart-section td,
+            .product-management-section th, .product-management-section td,
+            .modal-content .cart-section th, .modal-content .cart-section td,
+            .modal-content .product-management-section th, .modal-content .product-management-section td,
+            .modal-content .view-nota-content th, .modal-content .view-nota-content td,
+            .modal-content .add-stock-content th, .modal-content .add-stock-content td,
+            .modal-content .backup-restore-content th, .modal-content .backup-restore-content td {
+                padding: 10px;
+                font-size: 0.85em;
+            }
+
+            .remove-item, .product-management-section .delete-product, .product-management-section .edit-product, .product-management-section .add-stock-btn,
+            .modal-content .remove-item, .modal-content .product-management-section .delete-product, .modal-content .product-management-section .edit-product, .modal-content .product-management-section .add-stock-btn {
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+
+            .saved-notes-list li {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .saved-notes-list li .note-actions {
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .saved-notes-list li .note-actions button {
+                margin-left: 0;
+                flex-grow: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+
+            .cart-section table, .product-management-section table,
+            .modal-content .cart-section table, .modal-content .product-management-section table,
+            .modal-content .view-nota-content table, .modal-content .add-stock-content table,
+            .modal-content .backup-restore-content table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+
+            .cart-section th, .cart-section td,
+            .product-management-section th, .product-management-section td,
+            .modal-content .cart-section th, .modal-content .cart-section td,
+            .modal-content .product-management-section th, .modal-content .product-management-section td,
+            .modal-content .view-nota-content th, .modal-content .view-nota-content td,
+            .modal-content .add-stock-content th, .modal-content .add-stock-content td,
+            .modal-content .backup-restore-content th, .modal-content .backup-restore-content td {
+                min-width: 80px;
+            }
+            .product-inputs-group {
+                flex-direction: column;
+            }
+            .header-menu button {
+                width: 100%; /* Tombol menu header full width */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Aplikasi Penjualan</h1>
+        <div class="header-menu">
+            <button id="showAddNotaModalBtn">Buat Nota Baru</button>
+            <button id="showManageProductsModalBtn">Manajemen Produk</button>
+            <button id="showBackupRestoreModalBtn">Backup / Restore Data</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="welcomeMessage" class="welcome-message" style="display: none;">
+            <p>Selamat datang di Aplikasi Penjualan Sederhana!</p>
+            <p>Anda belum memiliki nota yang tersimpan. Silakan mulai dengan:</p>
+            <button id="welcomeNewNotaBtn">Buat Nota Baru</button>
+            <button id="welcomeManageProductsBtn">Tambah / Kelola Produk</button>
+        </div>
+
+        <div id="savedNotesSection" class="saved-notes-section">
+            <h2>Daftar Nota Tersimpan</h2>
+            <ul id="savedNotesList" class="saved-notes-list">
+                </ul>
+        </div>
+    </div>
+
+    <div id="addNotaModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div class="input-section">
+                <h2>Buat Nota Baru</h2>
+                <label for="notaDate">Tanggal Nota:</label>
+                <input type="date" id="notaDate">
+
+                <div class="product-inputs-group">
+                    <div>
+                        <label for="productSearchInput">Cari Produk:</label>
+                        <input type="text" id="productSearchInput" placeholder="Ketik nama produk...">
+                    </div>
+                    <div>
+                        <label for="productSelect">Pilih Produk:</label>
+                        <select id="productSelect">
+                            <option value="">-- Pilih Produk --</option>
+                            </select>
+                    </div>
+                    <div>
+                        <label for="price">Harga (Rp):</label>
+                        <input type="number" id="price" min="0" value="0" readonly>
+                    </div>
+                    <div>
+                        <label for="quantity">Jumlah:</label>
+                        <input type="number" id="quantity" min="1" value="1" required>
+                    </div>
+                </div>
+                <button id="addItem">Tambah ke Keranjang</button>
+            </div>
+
+            <div class="cart-section">
+                <h2>Keranjang Belanja</h2>
+                <table id="cartTable">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Jumlah</th>
+                            <th>Total</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">Total Pembayaran:</td>
+                            <td id="grandTotal">Rp 0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <button id="printNota">Cetak & Simpan Nota</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="manageProductsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div class="product-management-section">
+                <h2>Manajemen Produk</h2>
+                <div class="product-input-form">
+                    <label for="newProductName">Nama Produk Baru:</label>
+                    <input type="text" id="newProductName" placeholder="Contoh: Kemeja Polos" required>
+
+                    <label for="newProductPrice">Harga (Rp):</label>
+                    <input type="number" id="newProductPrice" min="0" value="0" required>
+
+                    <label for="newProductStock">Stok:</label>
+                    <input type="number" id="newProductStock" min="0" value="0" required>
+
+                    <button id="addNewProductBtn" data-mode="add">Tambah Produk Baru</button>
+                    <button id="cancelEditProductBtn" class="cancel-edit" style="display:none;">Batal Edit</button>
+                </div>
+
+                <h3>Daftar Produk Tersedia</h3>
+                <table id="availableProductsTable">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Stok</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewNotaModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>Detail Nota</h2>
+            <div id="viewNotaDetails" class="view-nota-details">
+                </div>
+            <div class="cart-section">
+                <h3>Item Nota</h3>
+                <table id="viewNotaCartTable">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Jumlah</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">Total Pembayaran:</td>
+                            <td id="viewNotaGrandTotal">Rp 0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <button id="printViewedNotaBtn">Cetak PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addStockModal" class="modal-overlay">
+        <div class="modal-content add-stock-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>Tambah Stok Produk</h2>
+            <p>Produk: <strong id="addStockProductName"></strong></p>
+            <p>Stok Saat Ini: <span id="addStockCurrentStock"></span></p>
+            <label for="stockToAdd">Jumlah Stok yang Ditambahkan:</label>
+            <input type="number" id="stockToAdd" min="1" value="1">
+            <button id="confirmAddStockBtn">Tambah Stok</button>
+        </div>
+    </div>
+
+    <div id="backupRestoreModal" class="modal-overlay">
+        <div class="modal-content backup-restore-content">
+            <button class="modal-close-btn">&times;</button>
+            <h2>Backup / Restore Data</h2>
+
+            <div class="backup-section">
+                <h3>Backup Data</h3>
+                <p>Unduh semua data produk dan nota Anda ke file JSON.</p>
+                <button id="backupDataBtn">Unduh Backup</button>
+            </div>
+
+            <div class="restore-section">
+                <h3>Restore Data</h3>
+                <p>Unggah file backup JSON untuk memulihkan data. Ini akan menimpa data yang ada!</p>
+                <input type="file" id="backupFileInput" accept=".json">
+                <button id="restoreDataBtn">Pulihkan Data</button>
+                <p id="restoreMessage" style="color: red;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript
+        window.jsPDF = window.jspdf.jsPDF; // Memastikan jsPDF tersedia secara global
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mendapatkan referensi elemen-elemen DOM utama
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            const savedNotesSection = document.getElementById('savedNotesSection');
+            const savedNotesList = document.getElementById('savedNotesList');
+
+            // Elemen Header Menu
+            const showAddNotaModalBtn = document.getElementById('showAddNotaModalBtn');
+            const showManageProductsModalBtn = document.getElementById('showManageProductsModalBtn');
+            const showBackupRestoreModalBtn = document.getElementById('showBackupRestoreModalBtn');
+            const welcomeNewNotaBtn = document.getElementById('welcomeNewNotaBtn');
+            const welcomeManageProductsBtn = document.getElementById('welcomeManageProductsBtn');
+
+
+            // Elemen Modal Tambah Nota
+            const addNotaModal = document.getElementById('addNotaModal');
+            const notaDateInput = addNotaModal.querySelector('#notaDate');
+            const productSearchInput = addNotaModal.querySelector('#productSearchInput');
+            const productSelect = addNotaModal.querySelector('#productSelect');
+            const priceInput = addNotaModal.querySelector('#price');
+            const quantityInput = addNotaModal.querySelector('#quantity');
+            const addItemButton = addNotaModal.querySelector('#addItem');
+            const cartTableBody = addNotaModal.querySelector('#cartTable tbody');
+            const grandTotalSpan = addNotaModal.querySelector('#grandTotal');
+            const printNotaButton = addNotaModal.querySelector('#printNota');
+            const addNotaModalCloseBtn = addNotaModal.querySelector('.modal-close-btn');
+
+            // Elemen Modal Manajemen Produk
+            const manageProductsModal = document.getElementById('manageProductsModal');
+            const newProductNameInput = manageProductsModal.querySelector('#newProductName');
+            const newProductPriceInput = manageProductsModal.querySelector('#newProductPrice');
+            const newProductStockInput = manageProductsModal.querySelector('#newProductStock');
+            const addNewProductBtn = manageProductsModal.querySelector('#addNewProductBtn');
+            const cancelEditProductBtn = manageProductsModal.querySelector('#cancelEditProductBtn');
+            const availableProductsTableBody = manageProductsModal.querySelector('#availableProductsTable tbody');
+            const manageProductsModalCloseBtn = manageProductsModal.querySelector('.modal-close-btn');
+
+            // Elemen Modal Melihat Nota
+            const viewNotaModal = document.getElementById('viewNotaModal');
+            const viewNotaDetailsDiv = viewNotaModal.querySelector('#viewNotaDetails');
+            const viewNotaCartTableBody = viewNotaModal.querySelector('#viewNotaCartTable tbody');
+            const viewNotaGrandTotalSpan = viewNotaModal.querySelector('#viewNotaGrandTotal');
+            const printViewedNotaBtn = viewNotaModal.querySelector('#printViewedNotaBtn');
+            const viewNotaModalCloseBtn = viewNotaModal.querySelector('.modal-close-btn');
+
+            // Elemen Modal Tambah Stok
+            const addStockModal = document.getElementById('addStockModal');
+            const addStockProductName = addStockModal.querySelector('#addStockProductName');
+            const addStockCurrentStock = addStockModal.querySelector('#addStockCurrentStock');
+            const stockToAddInput = addStockModal.querySelector('#stockToAdd');
+            const confirmAddStockBtn = addStockModal.querySelector('#confirmAddStockBtn');
+            const addStockModalCloseBtn = addStockModal.querySelector('.modal-close-btn');
+            let currentProductIdForStock = null; // Menyimpan ID produk yang stoknya akan ditambahkan
+
+            // Elemen Modal Backup / Restore
+            const backupRestoreModal = document.getElementById('backupRestoreModal');
+            const backupDataBtn = backupRestoreModal.querySelector('#backupDataBtn');
+            const backupFileInput = backupRestoreModal.querySelector('#backupFileInput');
+            const restoreDataBtn = backupRestoreModal.querySelector('#restoreDataBtn');
+            const restoreMessage = backupRestoreModal.querySelector('#restoreMessage');
+            const backupRestoreModalCloseBtn = backupRestoreModal.querySelector('.modal-close-btn');
+
+
+            // Set tanggal default ke hari ini
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            notaDateInput.value = `${year}-${month}-${day}`;
+
+            // Array untuk menyimpan item-item di keranjang saat ini
+            let currentCart = [];
+            // Array untuk menyimpan daftar produk yang tersedia
+            let availableProducts = [];
+            // Variabel untuk melacak produk yang sedang diedit
+            let editingProductId = null;
+            // Variabel untuk menyimpan data nota yang sedang dilihat
+            let currentViewedNota = null;
+
+            // --- Fungsionalitas Modal Umum ---
+            function openModal(modalElement) {
+                modalElement.style.display = 'flex';
+                // Reset keranjang saat membuka modal nota baru
+                if (modalElement === addNotaModal) {
+                    currentCart = [];
+                    updateCartDisplay();
+                    // Reset pencarian produk dan render ulang dropdown
+                    productSearchInput.value = '';
+                    renderAvailableProductsInSelect(''); // Tampilkan semua produk
+                    productSelect.value = '';
+                    priceInput.value = '0';
+                    quantityInput.value = '1';
+                    notaDateInput.value = `${year}-${month}-${day}`;
+                } else if (modalElement === manageProductsModal) {
+                    renderAvailableProductsInTable(); // Pastikan daftar produk terupdate di tabel manajemen
+                    // Reset form manajemen produk saat membuka modal
+                    newProductNameInput.value = '';
+                    newProductPriceInput.value = '0';
+                    newProductStockInput.value = '0';
+                    addNewProductBtn.textContent = 'Tambah Produk Baru';
+                    addNewProductBtn.dataset.mode = 'add';
+                    cancelEditProductBtn.style.display = 'none';
+                    editingProductId = null;
+                } else if (modalElement === backupRestoreModal) {
+                    // Reset input file dan pesan saat membuka modal backup/restore
+                    backupFileInput.value = '';
+                    restoreMessage.textContent = '';
+                }
+            }
+
+            function closeModal(modalElement) {
+                modalElement.style.display = 'none';
+            }
+
+            // Event Listeners untuk membuka modal
+            showAddNotaModalBtn.addEventListener('click', () => openModal(addNotaModal));
+            showManageProductsModalBtn.addEventListener('click', () => openModal(manageProductsModal));
+            showBackupRestoreModalBtn.addEventListener('click', () => openModal(backupRestoreModal));
+            welcomeNewNotaBtn.addEventListener('click', () => openModal(addNotaModal));
+            welcomeManageProductsBtn.addEventListener('click', () => openModal(manageProductsModal));
+
+            // Event Listeners untuk menutup modal
+            addNotaModalCloseBtn.addEventListener('click', () => closeModal(addNotaModal));
+            manageProductsModalCloseBtn.addEventListener('click', () => closeModal(manageProductsModal));
+            viewNotaModalCloseBtn.addEventListener('click', () => closeModal(viewNotaModal));
+            addStockModalCloseBtn.addEventListener('click', () => closeModal(addStockModal));
+            backupRestoreModalCloseBtn.addEventListener('click', () => closeModal(backupRestoreModal));
+
+            // Menutup modal saat mengklik di luar konten modal
+            addNotaModal.addEventListener('click', (e) => {
+                if (e.target === addNotaModal) {
+                    closeModal(addNotaModal);
+                }
+            });
+            manageProductsModal.addEventListener('click', (e) => {
+                if (e.target === manageProductsModal) {
+                    closeModal(manageProductsModal);
+                }
+            });
+            viewNotaModal.addEventListener('click', (e) => {
+                if (e.target === viewNotaModal) {
+                    closeModal(viewNotaModal);
+                }
+            });
+            addStockModal.addEventListener('click', (e) => {
+                if (e.target === addStockModal) {
+                    closeModal(addStockModal);
+                }
+            });
+            backupRestoreModal.addEventListener('click', (e) => {
+                if (e.target === backupRestoreModal) {
+                    closeModal(backupRestoreModal);
+                }
+            });
+
+
+            // --- Fungsionalitas Manajemen Produk ---
+
+            // Fungsi untuk memuat produk dari localStorage
+            function loadProducts() {
+                const products = localStorage.getItem('availableProducts');
+                availableProducts = products ? JSON.parse(products) : [];
+            }
+
+            // Fungsi untuk menyimpan produk ke localStorage
+            function saveProducts() {
+                localStorage.setItem('availableProducts', JSON.stringify(availableProducts));
+            }
+
+            // Fungsi untuk merender daftar produk yang tersedia ke tabel manajemen produk
+            function renderAvailableProductsInTable() {
+                availableProductsTableBody.innerHTML = ''; // Kosongkan tabel produk
+
+                if (availableProducts.length === 0) {
+                    availableProductsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #777;">Belum ada produk.</td></tr>';
+                    return;
+                }
+
+                availableProducts.forEach((product, index) => {
+                    const row = availableProductsTableBody.insertRow();
+                    row.insertCell(0).textContent = index + 1;
+                    row.insertCell(1).textContent = product.name;
+                    row.insertCell(2).textContent = `Rp ${product.price.toLocaleString('id-ID')}`;
+                    row.insertCell(3).textContent = product.stock;
+
+                    const actionCell = row.insertCell(4);
+                    // Tombol Tambah Stok
+                    const addStockButton = document.createElement('button');
+                    addStockButton.textContent = 'Tambah Stok';
+                    addStockButton.classList.add('add-stock-btn');
+                    addStockButton.dataset.id = product.id;
+                    addStockButton.addEventListener('click', (e) => {
+                        openAddStockModal(e.target.dataset.id);
+                    });
+                    actionCell.appendChild(addStockButton);
+
+                    // Tombol Edit
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.classList.add('edit-product');
+                    editButton.dataset.id = product.id;
+                    editButton.addEventListener('click', (e) => {
+                        editProduct(e.target.dataset.id);
+                    });
+                    actionCell.appendChild(editButton);
+
+                    // Tombol Hapus
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Hapus';
+                    deleteButton.classList.add('delete-product');
+                    deleteButton.dataset.id = product.id;
+                    deleteButton.addEventListener('click', (e) => {
+                        if (confirm(`Apakah Anda yakin ingin menghapus produk "${product.name}"?`)) {
+                            deleteProduct(e.target.dataset.id);
+                        }
+                    });
+                    actionCell.appendChild(deleteButton);
+                });
+            }
+
+            // Fungsi untuk merender daftar produk yang tersedia ke dropdown pemilihan produk (dengan filter)
+            function renderAvailableProductsInSelect(searchTerm = '') {
+                productSelect.innerHTML = '<option value="">-- Pilih Produk --</option>'; // Kosongkan dropdown
+
+                const filteredProducts = availableProducts.filter(product =>
+                    product.name.toLowerCase().includes(searchTerm.toLowerCase()) && product.stock > 0
+                );
+
+                if (filteredProducts.length === 0 && searchTerm !== '') {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = `-- Produk "${searchTerm}" tidak ditemukan atau stok habis --`;
+                    option.disabled = true;
+                    productSelect.appendChild(option);
+                } else if (filteredProducts.length === 0 && searchTerm === '') {
+                     const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = `-- Tidak ada produk tersedia (stok 0) --`;
+                    option.disabled = true;
+                    productSelect.appendChild(option);
+                }
+
+
+                filteredProducts.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (Rp ${product.price.toLocaleString('id-ID')} - Stok: ${product.stock})`;
+                    productSelect.appendChild(option);
+                });
+            }
+
+            // Event listener untuk input pencarian produk
+            productSearchInput.addEventListener('input', () => {
+                renderAvailableProductsInSelect(productSearchInput.value);
+                productSelect.value = ''; // Reset pilihan saat pencarian berubah
+                priceInput.value = '0'; // Reset harga
+            });
+
+
+            // Fungsi untuk menambah/mengedit produk
+            addNewProductBtn.addEventListener('click', () => {
+                const name = newProductNameInput.value.trim();
+                const price = parseFloat(newProductPriceInput.value);
+                const stock = parseInt(newProductStockInput.value);
+
+                if (!name) {
+                    showCustomAlert('Nama Produk tidak boleh kosong!');
+                    return;
+                }
+                if (isNaN(price) || price < 0) {
+                    showCustomAlert('Harga harus angka positif!');
+                    return;
+                }
+                if (isNaN(stock) || stock < 0) {
+                    showCustomAlert('Stok harus angka positif atau nol!');
+                    return;
+                }
+
+                if (addNewProductBtn.dataset.mode === 'add') {
+                    // Mode Tambah Produk Baru
+                    const existingProduct = availableProducts.find(p => p.name.toLowerCase() === name.toLowerCase());
+                    if (existingProduct) {
+                        showCustomAlert(`Produk dengan nama "${name}" sudah ada.`);
+                        return;
+                    }
+
+                    const newProduct = {
+                        id: `PROD-${new Date().getTime()}`,
+                        name: name,
+                        price: price,
+                        stock: stock
+                    };
+                    availableProducts.push(newProduct);
+                    showCustomAlert('Produk berhasil ditambahkan!');
+                } else {
+                    // Mode Edit Produk
+                    const productToEdit = availableProducts.find(p => p.id === editingProductId);
+                    if (productToEdit) {
+                        const existingProductWithSameName = availableProducts.find(p => p.name.toLowerCase() === name.toLowerCase() && p.id !== editingProductId);
+                        if (existingProductWithSameName) {
+                            showCustomAlert(`Produk dengan nama "${name}" sudah ada.`);
+                            return;
+                        }
+
+                        productToEdit.name = name;
+                        productToEdit.price = price;
+                        productToEdit.stock = stock;
+                        showCustomAlert('Perubahan produk berhasil disimpan!');
+                    }
+                    // Reset mode edit
+                    editingProductId = null;
+                    addNewProductBtn.textContent = 'Tambah Produk Baru';
+                    addNewProductBtn.dataset.mode = 'add';
+                    cancelEditProductBtn.style.display = 'none';
+                }
+
+                saveProducts();
+                renderAvailableProductsInTable(); // Perbarui tabel manajemen
+                renderAvailableProductsInSelect(''); // Perbarui dropdown pencarian
+                newProductNameInput.value = '';
+                newProductPriceInput.value = '0';
+                newProductStockInput.value = '0';
+                newProductNameInput.focus();
+            });
+
+            // Fungsi untuk mengisi form edit
+            function editProduct(productId) {
+                const product = availableProducts.find(p => p.id === productId);
+                if (product) {
+                    newProductNameInput.value = product.name;
+                    newProductPriceInput.value = product.price;
+                    newProductStockInput.value = product.stock;
+                    addNewProductBtn.textContent = 'Simpan Perubahan';
+                    addNewProductBtn.dataset.mode = 'edit';
+                    cancelEditProductBtn.style.display = 'inline-block';
+                    editingProductId = productId;
+                }
+            }
+
+            // Fungsi untuk membatalkan edit
+            cancelEditProductBtn.addEventListener('click', () => {
+                newProductNameInput.value = '';
+                newProductPriceInput.value = '0';
+                newProductStockInput.value = '0';
+                addNewProductBtn.textContent = 'Tambah Produk Baru';
+                addNewProductBtn.dataset.mode = 'add';
+                cancelEditProductBtn.style.display = 'none';
+                editingProductId = null;
+                showCustomAlert('Edit produk dibatalkan.');
+            });
+
+            // Fungsi untuk menghapus produk
+            function deleteProduct(productId) {
+                availableProducts = availableProducts.filter(product => product.id !== productId);
+                saveProducts();
+                renderAvailableProductsInTable();
+                renderAvailableProductsInSelect(''); // Perbarui dropdown pencarian
+                if (productSelect.value === productId) {
+                    productSelect.value = '';
+                    priceInput.value = '0';
+                }
+                showCustomAlert('Produk berhasil dihapus.');
+            }
+
+            // Event listener untuk dropdown pemilihan produk
+            productSelect.addEventListener('change', () => {
+                const selectedProductId = productSelect.value;
+                const selectedProduct = availableProducts.find(p => p.id === selectedProductId);
+
+                if (selectedProduct) {
+                    priceInput.value = selectedProduct.price;
+                } else {
+                    priceInput.value = '0';
+                }
+            });
+
+            // --- Fungsionalitas Tambah Stok (Modal Baru) ---
+            function openAddStockModal(productId) {
+                currentProductIdForStock = productId;
+                const product = availableProducts.find(p => p.id === productId);
+                if (product) {
+                    addStockProductName.textContent = product.name;
+                    addStockCurrentStock.textContent = product.stock;
+                    stockToAddInput.value = '1'; // Reset input jumlah
+                    openModal(addStockModal);
+                }
+            }
+
+            confirmAddStockBtn.addEventListener('click', () => {
+                const stockToAdd = parseInt(stockToAddInput.value);
+
+                if (isNaN(stockToAdd) || stockToAdd <= 0) {
+                    showCustomAlert('Jumlah stok yang ditambahkan harus angka positif!');
+                    return;
+                }
+
+                const product = availableProducts.find(p => p.id === currentProductIdForStock);
+                if (product) {
+                    product.stock += stockToAdd;
+                    saveProducts();
+                    renderAvailableProductsInTable(); // Perbarui tabel manajemen
+                    renderAvailableProductsInSelect(''); // Perbarui dropdown pencarian
+                    showCustomAlert(`Stok ${product.name} berhasil ditambahkan ${stockToAdd}. Stok baru: ${product.stock}`);
+                    closeModal(addStockModal);
+                } else {
+                    showCustomAlert('Produk tidak ditemukan.');
+                }
+            });
+
+
+            // --- Fungsionalitas Keranjang Belanja (di modal buat nota) ---
+
+            // Fungsi untuk memperbarui tampilan keranjang dan total pembayaran
+            function updateCartDisplay() {
+                cartTableBody.innerHTML = '';
+                let grandTotal = 0;
+
+                if (currentCart.length === 0) {
+                    cartTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #777;">Keranjang kosong. Tambahkan produk untuk memulai.</td></tr>';
+                    grandTotalSpan.textContent = 'Rp 0';
+                    return;
+                }
+
+                currentCart.forEach((item, index) => {
+                    const row = cartTableBody.insertRow();
+                    const totalItem = item.price * item.quantity;
+                    grandTotal += totalItem;
+
+                    row.insertCell(0).textContent = index + 1;
+                    row.insertCell(1).textContent = item.name;
+                    row.insertCell(2).textContent = `Rp ${item.price.toLocaleString('id-ID')}`;
+                    row.insertCell(3).textContent = item.quantity;
+                    row.insertCell(4).textContent = `Rp ${totalItem.toLocaleString('id-ID')}`;
+
+                    const actionCell = row.insertCell(5);
+                    const removeButton = document.createElement('button');
+                    removeButton.textContent = 'Hapus';
+                    removeButton.classList.add('remove-item');
+                    removeButton.addEventListener('click', () => {
+                        removeItem(index);
+                    });
+                    actionCell.appendChild(removeButton);
+                });
+
+                grandTotalSpan.textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
+            }
+
+            // Fungsi untuk menambahkan item baru ke keranjang saat ini
+            addItemButton.addEventListener('click', () => {
+                const selectedProductId = productSelect.value;
+                const quantity = parseInt(quantityInput.value);
+
+                if (!selectedProductId) {
+                    showCustomAlert('Pilih produk dari daftar terlebih dahulu!');
+                    return;
+                }
+                if (isNaN(quantity) || quantity < 1) {
+                    showCustomAlert('Jumlah harus angka positif minimal 1!');
+                    return;
+                }
+
+                const selectedProduct = availableProducts.find(p => p.id === selectedProductId);
+
+                if (selectedProduct) {
+                    // Cek stok
+                    if (selectedProduct.stock < quantity) {
+                        showCustomAlert(`Stok ${selectedProduct.name} tidak cukup. Tersedia: ${selectedProduct.stock}`);
+                        return;
+                    }
+
+                    // Kurangi stok produk yang tersedia
+                    selectedProduct.stock -= quantity;
+                    saveProducts();
+                    renderAvailableProductsInTable(); // Perbarui tabel manajemen
+                    renderAvailableProductsInSelect(productSearchInput.value); // Perbarui dropdown pencarian
+
+                    // Cek apakah produk sudah ada di keranjang, jika ya, tambahkan jumlahnya
+                    const existingCartItem = currentCart.find(item => item.id === selectedProductId);
+                    if (existingCartItem) {
+                        existingCartItem.quantity += quantity;
+                    } else {
+                        currentCart.push({
+                            id: selectedProduct.id,
+                            name: selectedProduct.name,
+                            price: selectedProduct.price,
+                            quantity: quantity
+                        });
+                    }
+
+                    updateCartDisplay();
+
+                    // Reset input setelah menambahkan
+                    productSelect.value = '';
+                    priceInput.value = '0';
+                    quantityInput.value = '1';
+                } else {
+                    showCustomAlert('Produk yang dipilih tidak valid.');
+                }
+            });
+
+            // Fungsi untuk menghapus item dari keranjang saat ini
+            function removeItem(index) {
+                const removedItem = currentCart[index];
+                const productInStock = availableProducts.find(p => p.id === removedItem.id);
+
+                if (productInStock) {
+                    productInStock.stock += removedItem.quantity;
+                    saveProducts();
+                    renderAvailableProductsInTable(); // Perbarui tabel manajemen
+                    renderAvailableProductsInSelect(productSearchInput.value); // Perbarui dropdown pencarian
+                }
+
+                currentCart.splice(index, 1);
+                updateCartDisplay();
+            }
+
+            // --- Fungsionalitas Cetak Nota PDF ---
+
+            function generateAndPrintNota(cartData, notaId, notaDate, timestamp) {
+                const doc = new window.jsPDF({
+                    unit: 'mm',
+                    format: [75, 200]
+                });
+
+                const leftMargin = (75 - 59) / 2;
+                const rightMargin = leftMargin;
+                const centerX = 75 / 2;
+                const startX = leftMargin;
+                const endX = 75 - rightMargin;
+
+                // Judul Nota
+                doc.setFontSize(14);
+                doc.text('NOTA PENJUALAN', centerX, 10, null, null, 'center');
+
+                // Informasi Toko/Tanggal
+                doc.setFontSize(8);
+                doc.text('Nama Toko: Aplikasi Penjualan Sederhana', startX, 18);
+                doc.text(`Tanggal: ${notaDate || new Date().toLocaleDateString('id-ID')}`, startX, 22);
+                doc.text('Alamat: Jalan Contoh No. 123, Kota Fiktif', startX, 26);
+                doc.text('Telepon: (021) 12345678', startX, 30);
+                if (notaId) {
+                    doc.text(`ID Nota: ${notaId}`, startX, 34);
+                }
+
+                // Garis pemisah
+                doc.setLineWidth(0.2);
+                doc.line(startX, 38, endX, 38);
+
+                // Header Tabel
+                const headers = [['No.', 'Produk', 'Hrg', 'Jml', 'Total']];
+                const data = [];
+                let grandTotal = 0;
+
+                cartData.forEach((item, index) => {
+                    const totalItem = item.price * item.quantity;
+                    grandTotal += totalItem;
+                    data.push([
+                        index + 1,
+                        item.name,
+                        item.price.toLocaleString('id-ID'),
+                        item.quantity,
+                        totalItem.toLocaleString('id-ID')
+                    ]);
+                });
+
+                doc.autoTable({
+                    startY: 40,
+                    head: headers,
+                    body: data,
+                    theme: 'grid',
+                    margin: { left: leftMargin, right: rightMargin },
+                    styles: {
+                        fontSize: 7,
+                        cellPadding: 1,
+                        halign: 'left',
+                        overflow: 'linebreak'
+                    },
+                    headStyles: {
+                        fillColor: [200, 200, 200],
+                        textColor: [0, 0, 0],
+                        fontStyle: 'bold'
+                    },
+                    columnStyles: {
+                        0: { halign: 'center', cellWidth: 7 },
+                        1: { cellWidth: 20 },
+                        2: { halign: 'right', cellWidth: 12 },
+                        3: { halign: 'center', cellWidth: 8 },
+                        4: { halign: 'right', cellWidth: 12 }
+                    },
+                    didParseCell: function(data) {
+                        if (data.section === 'body' && (data.column.index === 2 || data.column.index === 4)) {
+                            data.cell.text[0] = 'Rp ' + data.cell.text[0];
+                        }
+                    }
+                });
+
+                let finalY = doc.lastAutoTable.finalY;
+
+                // Total Pembayaran di bagian bawah
+                doc.setFontSize(10);
+                doc.text('Total Pembayaran:', startX, finalY + 5);
+                doc.text(`Rp ${grandTotal.toLocaleString('id-ID')}`, endX, finalY + 5, null, null, 'right');
+
+                // Tanda tangan
+                doc.setFontSize(8);
+                doc.text('Terima Kasih!', centerX, finalY + 15, null, null, 'center');
+                doc.text('Hormat kami,', centerX, finalY + 20, null, null, 'center');
+                doc.text('(Nama Petugas)', centerX, finalY + 30, null, null, 'center');
+
+
+                doc.save(`nota_penjualan_${notaId || new Date().getTime()}.pdf`);
+            }
+
+            // Event listener untuk tombol "Cetak & Simpan Nota"
+            printNotaButton.addEventListener('click', () => {
+                if (currentCart.length === 0) {
+                    showCustomAlert('Keranjang kosong, tidak ada nota untuk dicetak.');
+                    return;
+                }
+
+                // ID Nota berdasarkan timestamp (YYYYMMDDHHMMSS)
+                const now = new Date();
+                const notaId = `NOTA-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+                const selectedDate = notaDateInput.value;
+                const timestamp = now.toLocaleDateString('id-ID') + ' ' + now.toLocaleTimeString('id-ID');
+
+
+                saveNota({
+                    id: notaId,
+                    timestamp: timestamp,
+                    notaDate: selectedDate,
+                    cartData: currentCart
+                });
+
+                generateAndPrintNota(currentCart, notaId, selectedDate, timestamp);
+
+                currentCart = [];
+                updateCartDisplay();
+                showCustomAlert('Nota berhasil dicetak dan disimpan!');
+                closeModal(addNotaModal); // Tutup modal setelah nota dicetak dan disimpan
+            });
+
+            // --- Fungsionalitas Penyimpanan Nota & Tampilan Daftar Nota ---
+
+            function getSavedNotes() {
+                const notes = localStorage.getItem('savedSalesNotes');
+                return notes ? JSON.parse(notes) : [];
+            }
+
+            function saveNota(note) {
+                const notes = getSavedNotes();
+                notes.push(note);
+                localStorage.setItem('savedSalesNotes', JSON.stringify(notes));
+                renderSavedNotes();
+            }
+
+            function deleteNota(id) {
+                let notes = getSavedNotes();
+                const noteToDelete = notes.find(note => note.id === id);
+
+                if (noteToDelete) {
+                    // Kembalikan stok produk dari nota yang dihapus
+                    noteToDelete.cartData.forEach(item => {
+                        const productInStock = availableProducts.find(p => p.id === item.id);
+                        if (productInStock) {
+                            productInStock.stock += item.quantity;
+                        }
+                    });
+                    saveProducts(); // Simpan perubahan stok
+                    renderAvailableProductsInTable(); // Perbarui tampilan manajemen produk
+                    renderAvailableProductsInSelect(productSearchInput.value); // Perbarui dropdown pencarian
+                }
+
+                notes = notes.filter(note => note.id !== id);
+                localStorage.setItem('savedSalesNotes', JSON.stringify(notes));
+                renderSavedNotes();
+                showCustomAlert('Nota berhasil dihapus.');
+            }
+
+            function renderSavedNotes() {
+                savedNotesList.innerHTML = '';
+                const notes = getSavedNotes();
+
+                if (notes.length === 0) {
+                    savedNotesList.innerHTML = '<li style="text-align: center; color: #777;">Belum ada nota yang tersimpan.</li>';
+                    // Tampilkan pesan selamat datang jika tidak ada nota
+                    welcomeMessage.style.display = 'block';
+                    savedNotesSection.style.display = 'none';
+                    return;
+                } else {
+                    // Sembunyikan pesan selamat datang jika ada nota
+                    welcomeMessage.style.display = 'none';
+                    savedNotesSection.style.display = 'block';
+                }
+
+                notes.forEach(note => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `
+                        <span>${note.notaDate} (ID: ${note.id})</span>
+                        <div class="note-actions">
+                            <button class="view-note" data-id="${note.id}">Lihat Nota</button>
+                            <button class="delete-note" data-id="${note.id}">Hapus Nota</button>
+                        </div>
+                    `;
+                    savedNotesList.appendChild(listItem);
+                });
+
+                document.querySelectorAll('.view-note').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const noteId = event.target.dataset.id;
+                        const notes = getSavedNotes();
+                        const noteToView = notes.find(note => note.id === noteId);
+                        if (noteToView) {
+                            displayNotaInModal(noteToView);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.delete-note').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const noteId = event.target.dataset.id;
+                        if (confirm('Apakah Anda yakin ingin menghapus nota ini?')) {
+                            deleteNota(noteId);
+                        }
+                    });
+                });
+            }
+
+            // --- Fungsionalitas Melihat Nota di Modal ---
+            function displayNotaInModal(note) {
+                currentViewedNota = note;
+
+                // Isi detail nota
+                viewNotaDetailsDiv.innerHTML = `
+                    <p><strong>ID Nota:</strong> ${note.id}</p>
+                    <p><strong>Tanggal:</strong> ${note.notaDate}</p>
+                    <p><strong>Waktu Dibuat:</strong> ${note.timestamp}</p>
+                `;
+
+                // Isi tabel item nota
+                viewNotaCartTableBody.innerHTML = '';
+                let totalNota = 0;
+                note.cartData.forEach((item, index) => {
+                    const row = viewNotaCartTableBody.insertRow();
+                    const itemTotal = item.price * item.quantity;
+                    totalNota += itemTotal;
+                    row.insertCell(0).textContent = index + 1;
+                    row.insertCell(1).textContent = item.name;
+                    row.insertCell(2).textContent = `Rp ${item.price.toLocaleString('id-ID')}`;
+                    row.insertCell(3).textContent = item.quantity;
+                    row.insertCell(4).textContent = `Rp ${itemTotal.toLocaleString('id-ID')}`;
+                });
+                viewNotaGrandTotalSpan.textContent = `Rp ${totalNota.toLocaleString('id-ID')}`;
+
+                openModal(viewNotaModal);
+            }
+
+            // Event listener untuk tombol cetak di modal lihat nota
+            printViewedNotaBtn.addEventListener('click', () => {
+                if (currentViewedNota) {
+                    generateAndPrintNota(currentViewedNota.cartData, currentViewedNota.id, currentViewedNota.notaDate, currentViewedNota.timestamp);
+                } else {
+                    showCustomAlert('Tidak ada nota yang dipilih untuk dicetak.');
+                }
+            });
+
+            // --- Fungsionalitas Backup dan Restore Data ---
+
+            // Fungsi untuk backup data
+            backupDataBtn.addEventListener('click', () => {
+                const dataToBackup = {
+                    availableProducts: availableProducts,
+                    savedSalesNotes: getSavedNotes()
+                };
+                const jsonString = JSON.stringify(dataToBackup, null, 2); // Pretty print JSON
+
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                const now = new Date();
+                const filename = `sales_app_backup_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}.json`;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Bersihkan URL objek
+                showCustomAlert('Data berhasil di-backup!');
+            });
+
+            // Fungsi untuk restore data
+            restoreDataBtn.addEventListener('click', () => {
+                const file = backupFileInput.files[0];
+                if (!file) {
+                    restoreMessage.textContent = 'Pilih file backup JSON terlebih dahulu.';
+                    return;
+                }
+
+                if (!file.name.endsWith('.json')) {
+                    restoreMessage.textContent = 'File yang dipilih harus berformat .json.';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const restoredData = JSON.parse(event.target.result);
+
+                        if (restoredData.availableProducts && Array.isArray(restoredData.availableProducts) &&
+                            restoredData.savedSalesNotes && Array.isArray(restoredData.savedSalesNotes)) {
+
+                            if (confirm('Ini akan menimpa data yang ada. Lanjutkan?')) {
+                                localStorage.setItem('availableProducts', JSON.stringify(restoredData.availableProducts));
+                                localStorage.setItem('savedSalesNotes', JSON.stringify(restoredData.savedSalesNotes));
+
+                                loadProducts(); // Muat ulang produk
+                                renderAvailableProductsInTable(); // Perbarui tabel produk
+                                renderAvailableProductsInSelect(''); // Perbarui dropdown pencarian
+                                renderSavedNotes(); // Perbarui daftar nota
+
+                                showCustomAlert('Data berhasil dipulihkan!');
+                                closeModal(backupRestoreModal);
+                            } else {
+                                restoreMessage.textContent = 'Pemulihan data dibatalkan.';
+                            }
+                        } else {
+                            restoreMessage.textContent = 'Format file backup tidak valid.';
+                        }
+                    } catch (e) {
+                        restoreMessage.textContent = 'Gagal membaca atau mengurai file JSON. Pastikan file valid.';
+                        console.error('Error parsing JSON:', e);
+                    }
+                };
+                reader.onerror = () => {
+                    restoreMessage.textContent = 'Gagal membaca file.';
+                };
+                reader.readAsText(file);
+            });
+
+
+            // Fungsi alert kustom
+            function showCustomAlert(message) {
+                const alertBox = document.createElement('div');
+                alertBox.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: #fff;
+                    padding: 25px 35px;
+                    border-radius: 10px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    z-index: 1000;
+                    text-align: center;
+                    font-family: 'Inter', sans-serif;
+                    font-size: 1.1em;
+                    color: #333;
+                    max-width: 350px;
+                    line-height: 1.5;
+                    border: 1px solid #ddd;
+                `;
+                alertBox.innerHTML = `
+                    <p>${message}</p>
+                    <button style="
+                        background-color: #007bff;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        margin-top: 20px;
+                        font-size: 1em;
+                        transition: background-color 0.3s ease;
+                    " onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007bff'">OK</button>
+                `;
+                document.body.appendChild(alertBox);
+
+                const okButton = alertBox.querySelector('button');
+                okButton.addEventListener('click', () => {
+                    document.body.removeChild(alertBox);
+                });
+            }
+
+            // Inisialisasi tampilan saat halaman dimuat
+            loadProducts();
+            renderAvailableProductsInTable(); // Render tabel manajemen produk
+            renderAvailableProductsInSelect(''); // Render dropdown pencarian produk
+            updateCartDisplay(); // Ini akan dipanggil saat modal nota dibuka
+            renderSavedNotes(); // Ini akan menentukan tampilan awal (welcome atau daftar nota)
+        });
+    </script>
+</body>
+</html>
